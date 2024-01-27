@@ -13,7 +13,7 @@ let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
     let serverExe = 'dotnet';
-    let serverDLLPath = context.asAbsolutePath(path.join('..', 'ServerExample', 'Server', 'bin', 'Debug', 'netcoreapp2.1', 'Server.dll'));
+    let serverDLLPath = context.asAbsolutePath(path.join('..', 'ServerExample', 'Server', 'bin', 'Debug', 'netcoreapp3.1', 'Server.dll'));
     let serverOptions: ServerOptions = {
         run: { command: serverExe, args: [serverDLLPath] },
             debug: { command: serverExe, args: [serverDLLPath] }

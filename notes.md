@@ -30,6 +30,11 @@ visitor.Visit(chatContext); //visiting root expression == chat
         - `npm i @types/vscode`
         - `npm i path`
         - `npm i @types/node`
+- debugovani serveru spusteneho klientem
+    1. loop cekajici na pripojeni debuggeru
+        - `while (!Debugger.IsAttached) { Thread.Sleep(100); }`
+    2. VS: debug -> attach to process
+        - `dotnet.exe spoustejici Server.dll` 
 - extensions folder: `C:\Users\jfuer.HONZURKA-WIN\.vscode\extensions`
 
 ## zdroje
