@@ -1,0 +1,44 @@
+{
+  "name": "promela-lsp",
+  "displayName": "Promela LSP",
+  "description": "todo-describe",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "main": "./out/extension",
+  "contributes": {
+    "languages": [
+      {
+        "id": "promela",
+        "aliases": [
+          "Promela",
+          "promela"
+        ],
+        "extensions": [
+          ".pml"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "promela",
+        "scopeName": "source.promela",
+        "path": "./syntaxes/promela.tmLanguage.json"
+      }
+    ]
+  },
+  "dependencies": {
+    "@types/node": "^20.11.7",
+    "@types/vscode": "^1.85.0",
+    "path": "^0.12.7",
+    "vscode-languageclient": "^9.0.1"
+  },
+  "scripts": {
+    "watch": "tsc -b -w"
+  }
+}
