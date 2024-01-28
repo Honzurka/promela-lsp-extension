@@ -174,9 +174,7 @@ ALPHA: [a-zA-Z_];
 
 NUMBER: [0-9];
 
-WHITESPACE: [ \t] -> channel(HIDDEN);
-
-NEWLINE: ('\r' '\n'? | '\n') -> channel(HIDDEN);
+WHITESPACE: [ \n\r\t] -> channel(HIDDEN);
 
 BLOCK_COMMENT: '/*' .*? '*/' -> skip;
 
