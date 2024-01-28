@@ -1,0 +1,16 @@
+{
+  "name": "promela-grammar",
+  "version": "1.0.0",
+  "description": "todo",
+  "main": "main.ts",
+  "scripts": {
+    "antlr4ng": "cd grammar && antlr4ng Promela.g4 -Dlanguage=TypeScript -o generated",
+    "build": "npm run antlr4ng && tsc -b"
+  },
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "antlr4-c3": "^3.3.5",
+    "antlr4ng": "^2.0.9"
+  }
+}
