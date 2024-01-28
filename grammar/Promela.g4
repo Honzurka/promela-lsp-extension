@@ -60,7 +60,10 @@ step:
 	| 'XR' varref (',' varref)*
 	| 'XS' varref (',' varref)*;
 
-ivar: NAME ('[' CONST ']')?; //('=' any_expr | '=' ch_init)?;
+ivar:
+	decl_var_name ('[' CONST ']')?; //('=' any_expr | '=' ch_init)?;
+
+decl_var_name: NAME;
 
 ch_init: '[' CONST ']' 'OF' '{' typename (',' typename)* '}';
 

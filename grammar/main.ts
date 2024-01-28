@@ -1,15 +1,18 @@
 import { CommonTokenStream, BaseErrorListener, CharStreams, ParseTree, TerminalNode } from 'antlr4ng';
-import { CodeCompletionCore } from 'antlr4-c3';
+import { CodeCompletionCore, SymbolTable, VariableSymbol } from 'antlr4-c3';
 import { PromelaLexer } from './generated/PromelaLexer.js';
 import { PromelaParser } from './generated/PromelaParser.js';
-import { CaretPosition, computeTokenPosition } from './compute-token-position.js';
+import { CaretPosition, TokenPosition, computeTokenPosition } from './compute-token-position.js';
+import { SymbolTableVisitor } from './symbol-table-visitor.js';
 
-export function getSuggestion(code: string, caretPosition: CaretPosition) {
+export async function getSuggestion(code: string, caretPosition: CaretPosition) {
     const input = CharStreams.fromString(code);
     const lexer = new PromelaLexer(input);
     const tokenStream = new CommonTokenStream(lexer);
     const parser = new PromelaParser(tokenStream);
+
     const tree = parser.spec();
+    const symbolTable = new SymbolTableVisitor().visit(tree);
 
     const position = computeTokenPosition(tree, tokenStream, caretPosition);
     if (position === undefined) {
@@ -17,14 +20,23 @@ export function getSuggestion(code: string, caretPosition: CaretPosition) {
     }
     
     const core = new CodeCompletionCore(parser);
+    core.preferredRules = new Set([PromelaParser.RULE_decl_var_name]);
+
     const candidates = core.collectCandidates(position.index);
+
+    const variables = [];
+    if (candidates.rules.has(PromelaParser.RULE_decl_var_name)) {
+        const declaredVariables = await symbolTable?.getNestedSymbolsOfType(VariableSymbol);
+        const declaredVariableNames = declaredVariables?.map(v => v.name);
+        variables.push(...declaredVariableNames ?? []);
+    }
     
     const keywords: string[] = [];
     const other: string[] = []; //todo
     for (const candidate of candidates.tokens) {
         const symbolicName = parser.vocabulary.getSymbolicName(candidate[0]);
         if (candidate[0] == PromelaParser.NAME) {
-            // skip - handled elsewhere
+            console.log("DBG-skip: " + parser.vocabulary.getDisplayName(candidate[0]));
         }
         else if (symbolicName) {
             other.push(symbolicName.toLowerCase());
@@ -40,9 +52,10 @@ export function getSuggestion(code: string, caretPosition: CaretPosition) {
         }
     }
 
-    return [keywords, other];
+    return [variables, keywords, other];
 }
 
-const result = getSuggestion("bool flags[2];", { line: 1, column: 0 });
+const result = await getSuggestion("bool flags[2];\nbool x;", { line: 1, column: 5 });
 console.log(result);
+
 

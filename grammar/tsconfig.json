@@ -4,7 +4,7 @@
 		"module": "ES2022",
 		"target": "ES2022",
 		"moduleResolution": "node",
-		"noEmit": true,
+		// "noEmit": true,
 		"removeComments": false,
 		"noImplicitAny": true,
 		"noImplicitOverride": false,
@@ -16,7 +16,8 @@
 	},
 	"include": [
 		"**/*.ts",
-		"test.js",
+		"generated/*.ts",
+		"main.ts"
 	],
 	"exclude": [
 		"node_modules",
