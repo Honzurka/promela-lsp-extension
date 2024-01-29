@@ -9,6 +9,7 @@
     - -gui: zobrazi AST
 - js: `antlr4 -Dlanguage=JavaScript Promela.g4 -o generated`
     - node => `npm install antlr4`
+- testovani: `javac *.java && grun Promela spec ../promela-tests/test.pml -gui`
 
 ## Lexer
 
@@ -34,4 +35,9 @@
     - variables / classnames
         - **requires change in grammar**
         - `The code completion core can return parser rule indexes (as created by ANTLR4 when it generated your files). With a returned candidate ExprParser.RULE_variableRef you know that you have to ask your symbol for all visible variables (or functions if you get back ExprParser.RULE_functionRef)`
-    - 
+
+# Zdroje
+
+- https://github.com/mike-lischke/antlr4-c3
+- https://tomassetti.me/code-completion-with-antlr4-c3/
+    - viz take git repo

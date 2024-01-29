@@ -2,7 +2,7 @@ grammar Promela;
 
 /* PARSER RULES */
 
-spec: module+;
+spec: module+ EOF;
 
 module:
 	proctype
@@ -14,173 +14,282 @@ module:
 	| decl_lst;
 
 proctype:
-	active? 'PROCTYPE' NAME '(' decl_lst? ')' priority? enabler? '{' sequence '}';
+	active? PROCTYPE NAME LeftParen decl_lst? RightParen priority? enabler? LeftBrace sequence
+		RightBrace; // decl_lst here shouldnt be separated by semicolons
 
-init: 'INIT' priority? '{' sequence '}';
+init: INIT priority? LeftBrace sequence RightBrace;
 
-never: 'NEVER' '{' sequence '}';
+never: NEVER LeftBrace sequence RightBrace;
 
-trace: 'TRACE' '{' sequence '}';
+trace: TRACE LeftBrace sequence RightBrace;
 
-utype: 'TYPEDEF' NAME '{' decl_lst '}';
+utype: TYPEDEF NAME LeftBrace decl_lst RightBrace;
 
-mtype: 'MTYPE' '='? '{' NAME (',' NAME)* '}';
+mtype: MTYPE Assign? LeftBrace NAME (Comma NAME)* RightBrace;
 
-decl_lst: one_decl ( ';' one_decl)*;
+decl_lst:
+	one_decl Semic (one_decl Semic)+; //changed from original
 
 one_decl:
-	visible? typename ivar (',' ivar)*
+	visible? typename ivar (Comma ivar)*
 	| visible? unsigned_decl;
 
-unsigned_decl: 'UNSIGNED' NAME ':' CONST ('=' any_expr)?;
+unsigned_decl: UNSIGNED NAME Colon CONST (Assign any_expr)?;
 
 typename:
-	'BIT'
-	| 'BOOL'
-	| 'BYTE'
-	| 'SHORT'
-	| 'INT'
-	| 'MTYPE'
-	| 'CHAN'
+	BIT
+	| BOOL
+	| BYTE
+	| SHORT
+	| INT
+	| MTYPE
+	| CHAN
 	| uname;
 
-active: 'ACTIVE' ('[' CONST ']')?;
+active: ACTIVE (LeftBracket CONST RightBracket)?;
 
-priority: 'PRIORITY' CONST;
+priority: PRIORITY CONST;
 
-enabler: 'PROVIDED' '(' expr ')';
+enabler: PROVIDED LeftParen expr RightParen;
 
-visible: 'HIDDEN' | 'SHOW';
+visible: HIDDEN_VIS | SHOW;
 
-sequence: step (';' step)*;
+sequence: step (step)*; //changed from original
 
 step:
-	stmnt ('UNLESS' stmnt)?
+	stmnt (UNLESS stmnt)? Semic //changed from original
 	| decl_lst
-	| 'XR' varref (',' varref)*
-	| 'XS' varref (',' varref)*;
+	| XR varref (Comma varref)*
+	| XS varref (Comma varref)*;
 
 ivar:
-	decl_var_name ('[' CONST ']')?; //('=' any_expr | '=' ch_init)?;
+	decl_var_name (LeftBracket CONST RightBracket)? ivar_assign?;
+
+ivar_assign: Assign any_expr | Assign ch_init;
 
 decl_var_name: NAME;
 
-ch_init: '[' CONST ']' 'OF' '{' typename (',' typename)* '}';
+ch_init:
+	LeftBracket CONST RightBracket OF LeftBrace typename (
+		Comma typename
+	)* RightBrace;
 
-varref: NAME ('[' any_expr ']')? ('.' varref)?;
+varref: NAME (LeftBracket any_expr RightBracket)? (Dot varref)?;
 
-send: varref '!' send_args | varref '!!' send_args;
+send: varref Not send_args | varref DoubleNot send_args;
 
 receive:
-	varref '?' recv_args
-	| varref '??' recv_args
-	| varref '?<' recv_args '>'
-	| varref '??<' recv_args '>';
+	varref Question recv_args
+	| varref DoubleQuestion recv_args
+	| varref QuestionLess recv_args Greater
+	| varref DoubleQuestionLess recv_args Greater;
 
 poll:
-	varref '?' '[' recv_args ']'
-	| varref '??' '[' recv_args ']';
+	varref Question LeftBracket recv_args RightBracket
+	| varref DoubleQuestion LeftBracket recv_args RightBracket;
 
-send_args: arg_lst | any_expr '(' arg_lst ')';
+send_args: arg_lst | any_expr LeftParen arg_lst RightParen;
 
-arg_lst: any_expr (',' any_expr)*;
+arg_lst: any_expr (Comma any_expr)*;
 
 recv_args:
-	recv_arg (',' recv_arg)*
-	| recv_arg '(' recv_args ')';
+	recv_arg (Comma recv_arg)*
+	| recv_arg LeftParen recv_args RightParen;
 
-recv_arg: varref | 'EVAL' '(' varref ')' | '-'? CONST;
+recv_arg:
+	varref
+	| EVAL LeftParen varref RightParen
+	| Minus? CONST;
 
-assign: varref '=' any_expr | varref '++' | varref '--';
+assign:
+	varref Assign any_expr
+	| varref PlusPlus
+	| varref MinusMinus;
 
 stmnt:
-	'IF' opts 'FI'
-	| 'DO' opts 'OD'
-	| 'FOR' '(' range ')' '{' sequence '}'
-	| 'ATOMIC' '{' sequence '}'
-	| 'D_STEP' '{' sequence '}'
-	| 'SELECT' '(' range ')'
-	| '{' sequence '}'
+	IF opts FI
+	| DO opts OD
+	| FOR LeftParen range RightParen LeftBrace sequence RightBrace
+	| ATOMIC LeftBrace sequence RightBrace
+	| D_STEP LeftBrace sequence RightBrace
+	| SELECT LeftParen range RightParen
+	| LeftBrace sequence RightBrace
 	| send
 	| receive
 	| assign
-	| 'ELSE'
-	| 'BREAK'
-	| 'GOTO' NAME
-	| NAME ':' stmnt
-	| 'PRINT' '(' STR (',' arg_lst)? ')'
-	| 'ASSERT' expr
-	| expr; // | c_code | c_expr | c_decl | c_track | c_state;
+	| ELSE
+	| BREAK
+	| GOTO NAME
+	| NAME Colon stmnt
+	| PRINTF LeftParen STR (Comma arg_lst)? RightParen
+	| ASSERT expr
+	| expr;
 
-range: NAME ':' any_expr '..' any_expr | NAME 'IN' NAME;
+range: NAME Colon any_expr DotDot any_expr | NAME IN NAME;
 
-opts: ('::' sequence)+;
+opts: (ColonColon sequence)+;
 
-andor: '&&' | '||';
+andor: AndAnd | OrOr;
 
 binarop:
-	'+'
-	| '-'
-	| '*'
-	| '/'
-	| '%'
-	| '&'
-	| '^'
-	| '|'
-	| '>'
-	| '<'
-	| '>='
-	| '<='
-	| '=='
-	| '!='
-	| '<<'
-	| '>>'
+	Plus
+	| Minus
+	| Star
+	| Div
+	| Mod
+	| And
+	| Caret
+	| Or
+	| Greater
+	| Less
+	| GreaterEqual
+	| LessEqual
+	| Equal
+	| NotEqual
+	| LeftShift
+	| RightShift
 	| andor;
 
-unarop: '~' | '-' | '!';
+unarop: Tilde | Minus | Not;
 
 any_expr:
-	'(' any_expr ')'
+	LeftParen any_expr RightParen
 	| any_expr binarop any_expr
 	| unarop any_expr
-	| '(' any_expr '->' any_expr ':' any_expr ')'
-	| 'LEN' '(' varref ')'
+	| LeftParen any_expr Arrow any_expr Colon any_expr RightParen // TODO: seems wrong
+	| LEN LeftParen varref RightParen
 	| poll
 	| varref
 	| CONST
-	| 'TIMEOUT'
-	| 'NP_'
-	| 'ENABLED' '(' any_expr ')'
-	| 'PC_VALUE' '(' any_expr ')'
-	| NAME '[' any_expr ']' '@' NAME
-	| 'RUN' NAME '(' (arg_lst)? ')' (priority)?;
+	| TIMEOUT
+	| NP
+	| ENABLED LeftParen any_expr RightParen
+	| PC_VALUE LeftParen any_expr RightParen
+	| NAME LeftBracket any_expr RightBracket At NAME
+	| RUN NAME LeftParen (arg_lst)? RightParen (priority)?;
 
 expr:
 	any_expr
-	| '(' expr ')'
+	| LeftParen expr RightParen
 	| expr andor expr
-	| chanpoll '(' varref ')';
+	| chanpoll LeftParen varref RightParen;
 
-chanpoll: 'FULL' | 'EMPTY' | 'NFULL' | 'NEMPTY';
+chanpoll: FULL | EMPTY | NFULL | NEMPTY;
 
 uname: NAME;
 
 // /* LEXER RULES */
 
-STR: '"' [\u0000-\u0080]* '"';
+/* keywords - TODO: some might be missspelled [eg. print->printf] */
+
+ACTIVE: 'active';
+ASSERT: 'assert';
+ATOMIC: 'atomic';
+BIT: 'bit';
+BOOL: 'bool';
+BREAK: 'break';
+BYTE: 'byte';
+CHAN: 'chan';
+DO: 'do';
+D_STEP: 'd_step';
+ELSE: 'else';
+EMPTY: 'empty';
+ENABLED: 'enabled';
+EVAL: 'eval';
+FALSE: 'false';
+FI: 'fi';
+FOR: 'for';
+FULL: 'full';
+GOTO: 'goto';
+HIDDEN_VIS: 'hidden';
+IF: 'if';
+IN: 'in';
+INIT: 'init';
+INT: 'int';
+LEN: 'len';
+MTYPE: 'mtype';
+NEMPTY: 'nempty';
+NEVER: 'never';
+NFULL: 'nfull';
+NP: 'np_';
+OD: 'od';
+OF: 'of';
+PC_VALUE: 'pc_value';
+PRINTF: 'printf'; //missing printm variant
+PRIORITY: 'priority';
+PROCTYPE: 'proctype';
+PROVIDED: 'provided';
+RUN: 'run';
+SELECT: 'select';
+SHORT: 'short';
+SHOW: 'show';
+SKIP_CONST: 'skip';
+TIMEOUT: 'timeout';
+TRACE: 'trace';
+TRUE: 'true';
+TYPEDEF: 'typedef';
+UNLESS: 'unless';
+UNSIGNED: 'unsigned';
+XR: 'xr';
+XS: 'xs';
+
+/* symbols */
+LeftParen: '(';
+RightParen: ')';
+LeftBracket: '[';
+RightBracket: ']';
+LeftBrace: '{';
+RightBrace: '}';
+Assign: '=';
+Comma: ',';
+Semic: ';';
+Colon: ':';
+Dot: '.';
+Not: '!';
+DoubleNot: '!!';
+Question: '?';
+DoubleQuestion: '??';
+QuestionLess: '?<';
+Greater: '>';
+DoubleQuestionLess: '??<';
+Minus: '-';
+PlusPlus: '++';
+MinusMinus: '--';
+DotDot: '..';
+ColonColon: '::';
+AndAnd: '&&';
+OrOr: '||';
+Plus: '+';
+Star: '*';
+Div: '/';
+Mod: '%';
+And: '&';
+Caret: '^';
+Or: '|';
+Less: '<';
+GreaterEqual: '>=';
+LessEqual: '<=';
+Equal: '==';
+NotEqual: '!=';
+LeftShift: '<<';
+RightShift: '>>';
+Tilde: '~';
+Arrow: '->';
+At: '@';
+
+/* --- */
+STR: '"' [\u0000-\u0021\u0023-\u0080]* '"'; //disallow "
+
+CONST: TRUE | FALSE | SKIP_CONST | NUMBER+;
 
 NAME: ALPHA (ALPHA | NUMBER)*;
-
-CONST: 'TRUE' | 'FALSE' | 'SKIP' | NUMBER+;
 
 ALPHA: [a-zA-Z_];
 
 NUMBER: [0-9];
 
-WHITESPACE: [ \n\r\t] -> channel(HIDDEN);
-
 BLOCK_COMMENT: '/*' .*? '*/' -> skip;
 
 LINE_COMMENT: '//' ~[\n\r]* -> skip;
 
-/* explicit token definitions: TODO */
+WHITESPACE: [ \n\r\t] -> channel(HIDDEN);
