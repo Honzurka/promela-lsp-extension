@@ -1,11 +1,11 @@
 import { CommonTokenStream, BaseErrorListener, CharStreams, ParseTree, TerminalNode } from 'antlr4ng';
 import { CodeCompletionCore, SymbolTable, VariableSymbol } from 'antlr4-c3';
-import { PromelaLexer } from './generated/PromelaLexer.js';
-import { PromelaParser } from './generated/PromelaParser.js';
+import { PromelaLexer } from '../generated/PromelaLexer.js';
+import { PromelaParser } from '../generated/PromelaParser.js';
 import { CaretPosition, TokenPosition, computeTokenPosition } from './compute-token-position.js';
 import { SymbolTableVisitor } from './symbol-table-visitor.js';
 
-export async function getSuggestion(code: string, caretPosition: CaretPosition) {
+export function getSuggestion(code: string, caretPosition: CaretPosition) {
     const input = CharStreams.fromString(code);
     const lexer = new PromelaLexer(input);
     const tokenStream = new CommonTokenStream(lexer);
@@ -16,7 +16,7 @@ export async function getSuggestion(code: string, caretPosition: CaretPosition) 
 
     const position = computeTokenPosition(tree, tokenStream, caretPosition);
     if (position === undefined) {
-        return [];
+        return { variables: [], keywords: [], other: [] };
     }
     
     const core = new CodeCompletionCore(parser);
@@ -26,7 +26,7 @@ export async function getSuggestion(code: string, caretPosition: CaretPosition) 
 
     const variables = [];
     if (candidates.rules.has(PromelaParser.RULE_decl_var_name)) {
-        const declaredVariables = await symbolTable?.getNestedSymbolsOfType(VariableSymbol);
+        const declaredVariables = symbolTable?.getNestedSymbolsOfTypeSync(VariableSymbol);
         const declaredVariableNames = declaredVariables?.map(v => v.name);
         variables.push(...declaredVariableNames ?? []);
     }
@@ -52,10 +52,7 @@ export async function getSuggestion(code: string, caretPosition: CaretPosition) 
         }
     }
 
-    return [variables, keywords, other];
+    return { variables, keywords, other };
 }
 
-const result = await getSuggestion("bool flags[2];\nbool x;", { line: 1, column: 5 });
-console.log(result);
-
-
+// getSuggestion("bool flags[2];\nbool x;", { line: 1, column: 5 }).then(console.log);

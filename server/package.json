@@ -4,6 +4,7 @@
 	"version": "1.0.0",
 	"author": "Microsoft Corporation",
 	"license": "MIT",
+	"type": "module",
 	"engines": {
 		"node": "*"
 	},
@@ -13,7 +14,11 @@
 	},
 	"dependencies": {
 		"vscode-languageserver": "^9.0.1",
-		"vscode-languageserver-textdocument": "^1.0.11"
+		"vscode-languageserver-textdocument": "^1.0.11",
+		"antlr4-c3": "^3.3.5",
+		"antlr4ng": "^2.0.9"
 	},
-	"scripts": {}
+	"scripts": {
+		"antlr4ng": "antlr4ng Promela.g4 -Dlanguage=TypeScript -visitor -o generated"
+	}
 }

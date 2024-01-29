@@ -14,11 +14,15 @@ import {
 	TextDocumentPositionParams,
 	TextDocumentSyncKind,
 	InitializeResult
-} from 'vscode-languageserver/node';
+} from 'vscode-languageserver/node.js';
 
 import {
 	TextDocument
 } from 'vscode-languageserver-textdocument';
+
+import {
+	getSuggestion
+} from './processing/main.js';
 
 // Create a connection for the server, using Node's IPC as a transport.
 // Also include all preview / proposed LSP features.
@@ -100,27 +104,26 @@ connection.onDidChangeWatchedFiles(_change => {
 
 // This handler provides the initial list of the completion items.
 connection.onCompletion(
-	(_textDocumentPosition: TextDocumentPositionParams): CompletionItem[] => {
-		// The pass parameter contains the position of the text document in
-		// which code complete got requested. For the example we ignore this
-		// info and always provide the same completion items.
-		return [
-			{
-				label: 'active',
-				kind: CompletionItemKind.Keyword,
-				data: 1
-			},
-			{
-				label: 'proctype',
-				kind: CompletionItemKind.Keyword,
-				data: 2
-			},
-			{
-				label: 'init',
-				kind: CompletionItemKind.Keyword,
-				data: 3
-			},
-		];
+	(pos: TextDocumentPositionParams): CompletionItem[] => {
+		const doc = documents.get(pos.textDocument.uri)!.getText();
+		const line = pos.position.line;
+		const column = pos.position.character;
+		console.log("DOC");
+		console.log(doc);
+		const { keywords, variables } = getSuggestion(doc, { line, column });
+
+		const complVariables: CompletionItem[] = variables.map((label, i) => ({
+			label,
+			kind: CompletionItemKind.Variable,
+			data: i
+		}));
+		const complKeywords: CompletionItem[] = keywords.map((label, i) => ({
+			label,
+			kind: CompletionItemKind.Keyword,
+			data: variables.length + i
+		}));
+
+		return complVariables.concat(complKeywords);
 	}
 );
 
@@ -128,6 +131,7 @@ connection.onCompletion(
 // the completion list.
 connection.onCompletionResolve(
 	(item: CompletionItem): CompletionItem => {
+		/* TODO
 		if (item.data === 1) {
 			item.detail = 'Makes the process initialize automatically';
 			item.documentation = 'https://spinroot.com/spin/Man/active.html';
@@ -138,6 +142,7 @@ connection.onCompletionResolve(
 			item.detail = 'for declaring an initial process.';
 			item.documentation = 'https://spinroot.com/spin/Man/init.html';
 		}
+		*/
 		return item;
 	}
 );
@@ -145,6 +150,5 @@ connection.onCompletionResolve(
 // Make the text document manager listen on the connection
 // for open, change and close text document events
 documents.listen(connection);
-
 // Listen on the connection
 connection.listen();

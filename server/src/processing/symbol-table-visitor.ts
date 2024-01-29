@@ -1,7 +1,7 @@
 import { ScopedSymbol, SymbolTable, VariableSymbol } from "antlr4-c3";
-import { PromelaVisitor } from "./generated/PromelaVisitor";
+import { PromelaVisitor } from "../generated/PromelaVisitor";
 import { AbstractParseTreeVisitor } from "antlr4ng";
-import { Decl_var_nameContext } from "./generated/PromelaParser";
+import { Decl_var_nameContext } from "../generated/PromelaParser";
 
 export class SymbolTableVisitor extends AbstractParseTreeVisitor<SymbolTable> implements PromelaVisitor<SymbolTable> {
     constructor(
