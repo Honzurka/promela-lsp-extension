@@ -15,12 +15,12 @@ active proctype Producer() {
     byte capacity = 2;
 
     do
-    :: (capacity > 0 && val < 10) -> ToC ! val; val++; capacity--;
-    :: (capacity < 2) -> ToP ? 123(_); capacity++;
+    :: (capacity > 0 && val < 10) -> ToC ! val; val++; capacity--
+    :: (capacity < 2) -> ToP ? 123(_); capacity++
     :: else -> break
-    od
+    od;
 
-    assert(capacity == 2);
+    assert(capacity == 2)
 }
 
 active proctype Consumer() {
@@ -31,9 +31,9 @@ active proctype Consumer() {
 	    ToC ? receivedVal;
 	    assert(receivedVal == expectedVal);
 	    expectedVal++;
-	    ToP ! 123(receivedVal); //val added for debugging
+	    ToP ! 123(receivedVal) //val added for debugging
 	:: else -> break
-    od
+    od;
 
     assert(expectedVal == 10)
 }
