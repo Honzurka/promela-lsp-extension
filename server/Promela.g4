@@ -57,7 +57,7 @@ visible: HIDDEN_VIS | SHOW;
 sequence: step (step)*; //changed from original
 
 step:
-	stmnt (UNLESS stmnt)? Semic //changed from original
+	stmnt (UNLESS stmnt)? semic_or_arrow //changed from original
 	| decl_lst
 	| XR varref (Comma varref)*
 	| XS varref (Comma varref)*;
@@ -74,7 +74,10 @@ ch_init:
 		Comma typename
 	)* RightBrace;
 
-varref: NAME (LeftBracket any_expr RightBracket)? (Dot varref)?;
+varref:
+	varref_name (LeftBracket any_expr RightBracket)? (Dot varref)?;
+
+varref_name: NAME;
 
 send: varref Not send_args | varref DoubleNot send_args;
 
@@ -166,7 +169,7 @@ any_expr:
 	| ENABLED LeftParen any_expr RightParen
 	| PC_VALUE LeftParen any_expr RightParen
 	| NAME LeftBracket any_expr RightBracket At NAME
-	| RUN NAME LeftParen (arg_lst)? RightParen (priority)?;
+	| RUN NAME LeftParen (arg_lst)? RightParen (priority)?; //functions - maybe todo
 
 expr:
 	any_expr
@@ -177,6 +180,8 @@ expr:
 chanpoll: FULL | EMPTY | NFULL | NEMPTY;
 
 uname: NAME;
+
+semic_or_arrow: Semic | Arrow;
 
 // /* LEXER RULES */
 

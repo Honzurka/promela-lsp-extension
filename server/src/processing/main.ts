@@ -1,9 +1,10 @@
-import { CommonTokenStream, BaseErrorListener, CharStreams, ParseTree, TerminalNode } from 'antlr4ng';
+import { CommonTokenStream, BaseErrorListener, CharStreams, ParseTree, TerminalNode, ConsoleErrorListener } from 'antlr4ng';
 import { CodeCompletionCore, SymbolTable, VariableSymbol } from 'antlr4-c3';
 import { PromelaLexer } from '../generated/PromelaLexer.js';
 import { PromelaParser } from '../generated/PromelaParser.js';
 import { CaretPosition, TokenPosition, computeTokenPosition } from './compute-token-position.js';
 import { SymbolTableVisitor } from './symbol-table-visitor.js';
+import { SyntaxErrorListener } from './error-listener.js';
 
 export function getSuggestion(code: string, caretPosition: CaretPosition) {
     const input = CharStreams.fromString(code);
@@ -11,40 +12,42 @@ export function getSuggestion(code: string, caretPosition: CaretPosition) {
     const tokenStream = new CommonTokenStream(lexer);
     const parser = new PromelaParser(tokenStream);
 
-    const tree = parser.spec();
+    const listener = new SyntaxErrorListener();
+    parser.addErrorListener(listener);
+    parser.removeErrorListener(ConsoleErrorListener.INSTANCE);
+
+    const tree = parser.spec(); // writes errors
+    const errors = listener.getSyntaxErrors();
+    const defaultRetVal = { variables: [], keywords: [], errors: errors };
+
     const symbolTable = new SymbolTableVisitor().visit(tree);
 
     const position = computeTokenPosition(tree, tokenStream, caretPosition);
     if (position === undefined) {
-        return { variables: [], keywords: [], other: [] };
+        return defaultRetVal;
     }
     
     const core = new CodeCompletionCore(parser);
-    core.preferredRules = new Set([PromelaParser.RULE_decl_var_name]);
+    core.preferredRules = new Set([PromelaParser.RULE_varref_name]);
 
     const candidates = core.collectCandidates(position.index);
 
     const variables = [];
-    if (candidates.rules.has(PromelaParser.RULE_decl_var_name)) {
+    if (candidates.rules.has(PromelaParser.RULE_varref_name)) {
         const declaredVariables = symbolTable?.getNestedSymbolsOfTypeSync(VariableSymbol);
         const declaredVariableNames = declaredVariables?.map(v => v.name);
         variables.push(...declaredVariableNames ?? []);
     }
     
     const keywords: string[] = [];
-    const other: string[] = []; //todo
     for (const candidate of candidates.tokens) {
-        const symbolicName = parser.vocabulary.getSymbolicName(candidate[0]);
         if (candidate[0] == PromelaParser.NAME) {
-            console.log("DBG-skip: " + parser.vocabulary.getDisplayName(candidate[0]));
-        }
-        else if (symbolicName) {
-            other.push(symbolicName.toLowerCase());
+            // processed in previous steps
         }
         else { // keywords
             const keyword = parser.vocabulary.getDisplayName(candidate[0]);
             if (keyword) {
-                keywords.push(keyword.toLocaleLowerCase().substring(1, keyword.length - 1));
+                keywords.push(keyword.substring(1, keyword.length - 1));
             }
             else {
                 console.error("Unknown token type: " + candidate[0]);
@@ -52,7 +55,7 @@ export function getSuggestion(code: string, caretPosition: CaretPosition) {
         }
     }
 
-    return { variables, keywords, other };
+    return { variables, keywords, errors };
 }
 
 // getSuggestion("bool flags[2];\nbool x;", { line: 1, column: 5 }).then(console.log);

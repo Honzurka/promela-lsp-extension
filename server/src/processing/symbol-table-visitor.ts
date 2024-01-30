@@ -15,11 +15,12 @@ export class SymbolTableVisitor extends AbstractParseTreeVisitor<SymbolTable> im
     }
 
     visitDecl_var_name = (ctx: Decl_var_nameContext) => {
-        // const name = ctx.NAME().getText();
-        // const variable = new VariableSymbol(name, undefined);
-        // this.scope.addSymbol(variable);
-
-        this.symbolTable.addNewSymbolOfType(VariableSymbol, this.scope, ctx.NAME().getText(), undefined);
+        if (ctx.NAME()) {
+            this.symbolTable.addNewSymbolOfType(VariableSymbol, this.scope, ctx.NAME().getText(), undefined);
+        }
+        else {
+            console.error("Unknown variable name: " + ctx.getText());
+        }
 
         return this.visitChildren(ctx)!;
     };  
