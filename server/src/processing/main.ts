@@ -6,7 +6,7 @@ import { CaretPosition, TokenPosition, computeTokenPosition } from './compute-to
 import { SymbolTableVisitor } from './symbol-table-visitor.js';
 import { SyntaxErrorListener } from './error-listener.js';
 
-export function getSuggestion(code: string, caretPosition: CaretPosition) {
+export function getSuggestion(code: string, caretPosition: CaretPosition | null) {
     const input = CharStreams.fromString(code);
     const lexer = new PromelaLexer(input);
     const tokenStream = new CommonTokenStream(lexer);
@@ -22,11 +22,10 @@ export function getSuggestion(code: string, caretPosition: CaretPosition) {
 
     const symbolTable = new SymbolTableVisitor().visit(tree);
 
+    if (!caretPosition) return defaultRetVal;
     const position = computeTokenPosition(tree, tokenStream, caretPosition);
-    if (position === undefined) {
-        return defaultRetVal;
-    }
-    
+    if (!position) return defaultRetVal;
+
     const core = new CodeCompletionCore(parser);
     core.preferredRules = new Set([PromelaParser.RULE_varref_name]);
 

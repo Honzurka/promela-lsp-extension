@@ -63,12 +63,14 @@ documents.onDidChangeContent(change => {
 
 async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 
-	// The validator creates diagnostics for all uppercase words length 2 and more
-	const text = textDocument.getText();
-	const pattern = /.*\S.*#\b/g; // match a macro after another symbol
-	let m: RegExpExecArray | null;
+	const { errors } = getSuggestion(textDocument.getText(), null);
+
+	// const text = textDocument.getText();
+	// const pattern = /.*\S.*#\b/g; // match a macro after another symbol
+	// let m: RegExpExecArray | null;
 
 	const diagnostics: Diagnostic[] = [];
+	/*
 	while ((m = pattern.exec(text))) {
 		const diagnostic: Diagnostic = {
 			severity: DiagnosticSeverity.Error,
@@ -91,6 +93,19 @@ async function validateTextDocument(textDocument: TextDocument): Promise<void> {
 			];
 		}
 		diagnostics.push(diagnostic);
+	}
+	*/
+
+	for (const e of errors) {
+		diagnostics.push({
+			severity: DiagnosticSeverity.Error,
+			range: {
+				start: { line: e.line, character: e.column },
+				end: { line: e.line, character: e.column }
+			},
+			message: e.msg,
+			source: 'Promela file'
+		});
 	}
 
 	// Send the computed diagnostics to VSCode.
