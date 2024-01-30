@@ -27,8 +27,8 @@ utype: TYPEDEF NAME LeftBrace decl_lst RightBrace;
 
 mtype: MTYPE Assign? LeftBrace NAME (Comma NAME)* RightBrace;
 
-decl_lst:
-	one_decl Semic (one_decl Semic)+; //changed from original
+decl_lst: one_decl ( Semic one_decl)* Semic?;
+// decl_lst: one_decl Semic (one_decl Semic)+; //changed from original
 
 one_decl:
 	visible? typename ivar (Comma ivar)*
@@ -54,10 +54,12 @@ enabler: PROVIDED LeftParen expr RightParen;
 
 visible: HIDDEN_VIS | SHOW;
 
-sequence: step (step)*; //changed from original
+// sequence: step (step)*; //changed from original
+sequence: step ( semic_or_arrow step)*;
 
 step:
-	stmnt (UNLESS stmnt)? semic_or_arrow //changed from original
+	// stmnt (UNLESS stmnt)? semic_or_arrow //changed from original
+	stmnt (UNLESS stmnt)?
 	| decl_lst
 	| XR varref (Comma varref)*
 	| XS varref (Comma varref)*;

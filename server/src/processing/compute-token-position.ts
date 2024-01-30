@@ -46,8 +46,8 @@ function computeTokenPositionOfTerminal(
 
 function computeTokenPositionOfChildNode(
     parseTree: ParserRuleContext, tokens: TokenStream, caretPosition: CaretPosition, identifierTokenTypes: number[]) {
-    if((parseTree.start && parseTree.start.line > caretPosition.line) ||
-        (parseTree.stop && parseTree.stop.line < caretPosition.line)) {
+    caretPosition.line = Math.min(parseTree.stop.line, caretPosition.line);
+    if((parseTree.start && parseTree.start.line > caretPosition.line)) {
         return undefined;
     }
     for (let i = 0; i < parseTree.children!.length; i++) {
