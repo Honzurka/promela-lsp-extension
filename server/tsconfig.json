@@ -1,7 +1,9 @@
 {
 	"compilerOptions": {
 		"target": "es2020",
-		"lib": ["es2020"],
+		"lib": [
+			"es2020"
+		],
 		"module": "es2020",
 		"moduleResolution": "node",
 		"sourceMap": true,
@@ -11,6 +13,11 @@
 		"declaration": true,
 		"inlineSources": true
 	},
-	"include": ["src"],
-	"exclude": ["node_modules", ".vscode-test"]
+	"include": [
+		"src",
+	],
+	"exclude": [
+		"node_modules",
+		".vscode-test"
+	]
 }
