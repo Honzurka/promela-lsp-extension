@@ -27,21 +27,23 @@ export function getSuggestion(code: string, caretPosition: CaretPosition | null)
     if (!position) return defaultRetVal;
 
     const core = new CodeCompletionCore(parser);
-    core.preferredRules = new Set([PromelaParser.RULE_varref_name]);
+    // core.preferredRules = new Set([PromelaParser.RULE_varref_name, PromelaParser.NAME, PromelaParser.RULE_stmnt]);
 
     const candidates = core.collectCandidates(position.index);
 
     const variables = [];
-    if (candidates.rules.has(PromelaParser.RULE_varref_name)) {
-        const declaredVariables = symbolTable?.getNestedSymbolsOfTypeSync(VariableSymbol);
-        const declaredVariableNames = declaredVariables?.map(v => v.name);
-        variables.push(...declaredVariableNames ?? []);
-    }
+    // if (candidates.rules.has(PromelaParser.RULE_varref_name)) {
+    //     const declaredVariables = symbolTable?.getNestedSymbolsOfTypeSync(VariableSymbol);
+    //     const declaredVariableNames = declaredVariables?.map(v => v.name);
+    //     variables.push(...declaredVariableNames ?? []);
+    // }
     
     const keywords: string[] = [];
     for (const candidate of candidates.tokens) {
         if (candidate[0] == PromelaParser.NAME) {
-            // processed in previous steps
+            const declaredVariables = symbolTable?.getNestedSymbolsOfTypeSync(VariableSymbol);
+            const declaredVariableNames = declaredVariables?.map(v => v.name);
+            variables.push(...declaredVariableNames ?? []);
         }
         else { // keywords
             const keyword = parser.vocabulary.getDisplayName(candidate[0]);
